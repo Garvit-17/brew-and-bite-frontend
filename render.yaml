@@ -1,0 +1,56 @@
+# Render Blueprint for Brew & Bite
+# Place this file at the ROOT of your Git repo (next to the `backend/` and `cafe-menu/` folders).
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # ----------------------------------------------------------------------
+  # Backend — Express + MongoDB API (Web Service)
+  # ----------------------------------------------------------------------
+  - type: web
+    name: brew-and-bite-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: singapore          # closest region to India; optional
+    buildCommand: npm install
+    startCommand: npm start     # runs "node index.js"
+    healthCheckPath: /api/health
+    envVars:
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_SECRET
+        generateValue: true     # Render auto-generates a strong secret
+      # The values below are secrets — set them in the Render dashboard when prompted.
+      - key: MONGODB_URI
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Set this to your frontend's URL AFTER the first deploy (see steps).
+      - key: CLIENT_URL
+        sync: false
+
+  # ----------------------------------------------------------------------
+  # Frontend — React + Vite (Static Site)
+  # ----------------------------------------------------------------------
+  - type: web
+    name: brew-and-bite-frontend
+    runtime: static
+    rootDir: cafe-menu
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    # SPA rewrite so React Router routes don't 404 on refresh
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # Must include the trailing /api  (e.g. https://brew-and-bite-backend.onrender.com/api)
+      # Set this AFTER the backend's URL is known (see steps).
+      - key: VITE_API_URL
+        sync: false
